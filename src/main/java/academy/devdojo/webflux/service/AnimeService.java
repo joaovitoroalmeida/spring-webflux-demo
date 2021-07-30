@@ -5,7 +5,9 @@ import academy.devdojo.webflux.repository.AnimeRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -24,7 +26,12 @@ public class AnimeService {
 
     public Mono<Anime> findById(int id){
         logger.info("Realizando busca de anime, Id: {}", id);
-        return animeRepository.findById(id);
+        return animeRepository.findById(id)
+                .switchIfEmpty(monoResponseStatusNotFoundException());
+    }
+
+    private Mono<? extends Anime> monoResponseStatusNotFoundException() {
+        return Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Anime not found"));
     }
 
     public Mono<Anime> save(Anime anime) {
@@ -37,6 +44,12 @@ public class AnimeService {
         return findById(anime.getId())
                 .map(animeFound -> anime.withId(animeFound.getId()))
                 .flatMap(animeRepository::save)
-                .thenEmpty(Mono.empty());
+                .then();
+    }
+
+    public Mono<Void> delete(int id) {
+        logger.info("Realizando delecão de anime, Id: {}", id);
+        return findById(id)
+                .flatMap(animeRepository::delete);
     }
 }
