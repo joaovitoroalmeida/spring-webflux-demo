@@ -63,8 +63,8 @@ public class AnimeControllerTest {
     }
 
     @Test
-    @DisplayName("findAll returns a flux of anime")
-    public void findAllReturnFLuxOfAnimeWhenSucessful(){
+    @DisplayName("listAll returns a flux of anime")
+    public void listAllReturnFLuxOfAnimeWhenSucessful(){
         StepVerifier.create(animeController.listAll())
                 .expectSubscription()
                 .expectNext(anime)
