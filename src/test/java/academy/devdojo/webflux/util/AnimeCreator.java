@@ -8,7 +8,7 @@ public class AnimeCreator {
 
     public static Anime createAnimeToBeSaved(){
         return Anime.builder()
-                .animeId("7f9b7171-6723-4b20-aff2-4a497f6af5a8")
+                .animeId(ANIME_ID)
                 .name("Pokemon")
                 .build();
     }
@@ -16,7 +16,7 @@ public class AnimeCreator {
     public static Anime createValidAnime(){
         return Anime.builder()
                 .id(1)
-                .animeId("7f9b7171-6723-4b20-aff2-4a497f6af5a8")
+                .animeId(ANIME_ID)
                 .name("Pokemon")
                 .build();
     }
@@ -24,7 +24,7 @@ public class AnimeCreator {
     public static Anime createValidUpdateAnime(){
         return Anime.builder()
                 .id(1)
-                .animeId("7f9b7171-6723-4b20-aff2-4a497f6af5a8")
+                .animeId(ANIME_ID)
                 .name("Naruto")
                 .build();
     }

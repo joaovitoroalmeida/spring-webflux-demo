@@ -1,5 +1,6 @@
 package academy.devdojo.webflux.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,5 +29,6 @@ public class Anime {
     @Id
     private int id;
 
+    @JsonProperty("anime_id")
     private String animeId = Objects.nonNull(getAnimeId()) ? getAnimeId() : UUID.randomUUID().toString();
 }
