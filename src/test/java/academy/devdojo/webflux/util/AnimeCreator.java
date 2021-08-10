@@ -8,7 +8,6 @@ public class AnimeCreator {
 
     public static Anime createAnimeToBeSaved(){
         return Anime.builder()
-                .animeId(ANIME_ID)
                 .name("Pokemon")
                 .build();
     }
