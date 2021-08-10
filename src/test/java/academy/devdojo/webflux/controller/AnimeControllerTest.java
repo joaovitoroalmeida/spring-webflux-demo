@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
+import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
@@ -40,11 +41,24 @@ public class AnimeControllerTest {
 
     @BeforeEach
     public void setUp(){
-        BDDMockito.given(animeService.findAll()).willReturn(Flux.just(anime));
-        BDDMockito.given(animeService.findById(ArgumentMatchers.anyInt())).willReturn(Mono.just(anime));
-        BDDMockito.given(animeService.save(AnimeCreator.createAnimeToBeSaved())).willReturn(Mono.just(anime));
-        BDDMockito.given(animeService.delete(ArgumentMatchers.anyInt())).willReturn(Mono.empty());
-        BDDMockito.given(animeService.update(AnimeCreator.createValidUpdateAnime())).willReturn(Mono.empty());
+        BDDMockito.given(animeService.findAll())
+                .willReturn(Flux.just(anime));
+
+        BDDMockito.given(animeService.findById(ArgumentMatchers.anyInt()))
+                .willReturn(Mono.just(anime));
+
+        BDDMockito.given(animeService.save(AnimeCreator.createAnimeToBeSaved()))
+                .willReturn(Mono.just(anime));
+
+        BDDMockito.given(animeService
+                        .saveAll(List.of(AnimeCreator.createAnimeToBeSaved(), AnimeCreator.createAnimeToBeSaved())))
+                .willReturn(Flux.just(anime, anime));
+
+        BDDMockito.given(animeService.delete(ArgumentMatchers.anyInt()))
+                .willReturn(Mono.empty());
+
+        BDDMockito.given(animeService.update(AnimeCreator.createValidUpdateAnime()))
+                .willReturn(Mono.empty());
     }
 
     @Test
@@ -87,6 +101,16 @@ public class AnimeControllerTest {
         StepVerifier.create(animeController.save(animeToBeSaved))
                 .expectSubscription()
                 .expectNext(anime)
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("saveBatch creates an anime when successful")
+    public void saveBatchCreateAnimeWhenSucessful(){
+        Anime animeToBeSaved = AnimeCreator.createAnimeToBeSaved();
+        StepVerifier.create(animeController.saveBatch(List.of(animeToBeSaved, animeToBeSaved)))
+                .expectSubscription()
+                .expectNext(anime, anime)
                 .verifyComplete();
     }
 
