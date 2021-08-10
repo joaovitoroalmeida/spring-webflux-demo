@@ -3,12 +3,8 @@ spring:
     url: r2dbc:postgresql://localhost:5432/postgres?schema=anime
     username: postgres
     password: root
+
 logging:
   level:
     org:
-      springframework:
-        data:
-          r2dbc: DEBUG
-
-- name: Snyk CLI Action
-  uses: clarkio/snyk-cli-action@1.0.0
+      springframework: DEBUG

@@ -8,9 +8,8 @@ import reactor.blockhound.BlockHound;
 public class SpringWebfluxEssentialsApplication {
 
 //	static {
-//		BlockHound.install();
+//		BlockHound.install(builder -> builder.allowBlockingCallsInside("java.util.UUID", "randomUUId"));
 //	}
-
 	public static void main(String[] args) {
 		SpringApplication.run(SpringWebfluxEssentialsApplication.class, args);
 	}
