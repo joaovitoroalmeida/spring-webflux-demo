@@ -3,6 +3,7 @@ package academy.devdojo.webflux.integration;
 import academy.devdojo.webflux.domain.Anime;
 import academy.devdojo.webflux.repository.AnimeRepository;
 import academy.devdojo.webflux.util.AnimeCreator;
+import academy.devdojo.webflux.util.WebTestClientUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,11 +39,13 @@ import java.util.concurrent.TimeUnit;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AnimeControllerIT {
 
+    @Autowired
+    private WebTestClientUtil webTestClientUtil;
     @MockBean
     private AnimeRepository animeRepository;
-
-    @Autowired
-    private WebTestClient testClient;
+    private WebTestClient testClientUser;
+    private WebTestClient testClientAdmin;
+    private WebTestClient testClientInvalid;
 
     private final Anime anime = AnimeCreator.createValidAnime();
 
@@ -53,6 +56,10 @@ public class AnimeControllerIT {
 
     @BeforeEach
     public void setUp() {
+        testClientUser = webTestClientUtil.authenticateClient("igor", "Joao@123");
+        testClientAdmin = webTestClientUtil.authenticateClient("joao", "Joao@123");
+        testClientInvalid = webTestClientUtil.authenticateClient("teste", "teste");
+
         BDDMockito.given(animeRepository.findAll())
                 .willReturn(Flux.just(anime));
 
@@ -94,7 +101,7 @@ public class AnimeControllerIT {
     @DisplayName("listAll returns a flux of anime")
     public void listAllReturnFLuxOfAnimeWhenSucessful(){
 
-        testClient.get()
+        testClientAdmin.get()
                 .uri("/animes")
                 .exchange()
                 .expectStatus().isOk()
@@ -115,7 +122,7 @@ public class AnimeControllerIT {
     @DisplayName("findById returns Mono with anime when it exists")
     public void findByIdReturnMonoAnimeWhenSucessful(){
 
-        testClient.get()
+        testClientUser.get()
                 .uri("/animes/{id}", 1)
                 .exchange()
                 .expectStatus().isOk()
@@ -129,7 +136,7 @@ public class AnimeControllerIT {
     public void findByIdReturnMonoAnimeWhenEmptyMonoIsReturned(){
         BDDMockito.given(animeRepository.findById(ArgumentMatchers.anyInt())).willReturn(Mono.empty());
 
-        testClient.get()
+        testClientUser.get()
                 .uri("/animes/{id}", 1)
                 .exchange()
                 .expectStatus().isNotFound()
@@ -144,7 +151,7 @@ public class AnimeControllerIT {
     public void saveCreateAnimeWhenSucessful(){
         Anime animeToBeSaved = AnimeCreator.createAnimeToBeSaved();
 
-        testClient.post()
+        testClientAdmin.post()
                 .uri("/animes")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(animeToBeSaved))
@@ -160,7 +167,7 @@ public class AnimeControllerIT {
     public void saveBatchCreateAnimeWhenSucessful(){
         Anime animeToBeSaved = AnimeCreator.createAnimeToBeSaved();
 
-        testClient.post()
+        testClientAdmin.post()
                 .uri("/animes/batch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(List.of(animeToBeSaved, animeToBeSaved)))
@@ -177,7 +184,7 @@ public class AnimeControllerIT {
     public void saveReturnsErrorWhenNameIsEmpty(){
         Anime animeToBeSaved = AnimeCreator.createAnimeToBeSaved().withName("");
 
-        testClient.post()
+        testClientAdmin.post()
                 .uri("/animes")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(animeToBeSaved))
@@ -191,7 +198,7 @@ public class AnimeControllerIT {
     @Test
     @DisplayName("delete removes the anime when successful")
     public void deleteRemovesAnimeWhenSucessful(){
-        testClient.delete()
+        testClientAdmin.delete()
                 .uri("/animes/{id}", 1)
                 .exchange()
                 .expectStatus().isNoContent();
@@ -203,7 +210,7 @@ public class AnimeControllerIT {
     public void deleteReturnMonoErrorWhenEmptyMonoIsReturned(){
         BDDMockito.given(animeRepository.findById(ArgumentMatchers.anyInt())).willReturn(Mono.empty());
 
-        testClient.delete()
+        testClientAdmin.delete()
                 .uri("/animes/{id}", 1)
                 .exchange()
                 .expectStatus().isNotFound()
@@ -216,7 +223,7 @@ public class AnimeControllerIT {
     @Test
     @DisplayName("update save updated anime and returns empty mono when sucessfull")
     public void updateSaveUpdatedAnimeWhenSucessfull(){
-        testClient.put()
+        testClientAdmin.put()
                 .uri("/animes/{id}", 1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(AnimeCreator.createValidAnime()))
@@ -229,7 +236,7 @@ public class AnimeControllerIT {
     @DisplayName("update returns Mono error when anime does not exist")
     public void updateReturnMonoErrorWhenEmptyMonoIsReturned(){
         BDDMockito.given(animeRepository.findById(ArgumentMatchers.anyInt())).willReturn(Mono.empty());
-        testClient.put()
+        testClientAdmin.put()
                 .uri("/animes/{id}", 1)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(anime))
@@ -250,7 +257,7 @@ public class AnimeControllerIT {
                         .saveAll(ArgumentMatchers.anyIterable()))
                 .willReturn(Flux.just(anime, anime.withName("")));
 
-        testClient.post()
+        testClientAdmin.post()
                 .uri("/animes/batch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(List.of(animeToBeSaved, animeToBeSaved)))
@@ -258,6 +265,28 @@ public class AnimeControllerIT {
                 .expectStatus().isBadRequest()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(400);
+    }
+
+    @Order(13)
+    @Test
+    @DisplayName("listAll returns forbidden when user is successfully authenticated and does not have role ADMIN")
+    public void listAllReturnForbiddenWhenUserDoesNotHaveRoleAdmin(){
+
+        testClientUser.get()
+                .uri("/animes")
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Order(14)
+    @Test
+    @DisplayName("listAll returns unauthorized when user is successfully authenticated and does not have role ADMIN")
+    public void listAllReturnUnauthorizedWhenUserDoesNotHaveRoleAdmin(){
+
+        testClientInvalid.get()
+                .uri("/animes")
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 }
 
